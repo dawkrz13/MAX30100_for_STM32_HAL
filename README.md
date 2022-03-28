@@ -22,11 +22,11 @@ An STM32 HAL library for the MAX30100 pulse oximeter and heart rate sensor.
 
 ### Main program
 * In `main.c` (main program body file), add:
-```ruby
+```c
 #include "max30100_for_stm32_hal.h"
 ```
 * In `main.c`, before the main loop and after the system inits, add the following lines:
- ```ruby
+ ```c
 MAX30100_Init(&hi2c1, &huart1);
 MAX30100_SetSpO2SampleRate(MAX30100_SPO2SR_DEFAULT);
 MAX30100_SetLEDPulseWidth(MAX30100_LEDPW_DEFAULT);
@@ -35,11 +35,11 @@ MAX30100_SetMode(MAX30100_SPO2_MODE);
  ```
  ### Interrupt service routine
 * In `stm32f*xx_it.c` (interrupt service routines file), add:
-```ruby
+```c
 #include "max30100_for_stm32_hal.h"
 ```
 * In the corresponding interrupt handler function, call the interrupt handler:
-```ruby
+```c
 MAX30100_InterruptHandler();
 ```
 * Complie and flash program to microcontroller.
@@ -47,7 +47,7 @@ MAX30100_InterruptHandler();
 * Refer to [./examples](./examples) ([`main.c`](./examples/main.c), [`stm32f0xx_it.c`](./examples/stm32f0xx_it.c)) and [datasheets](https://www.maximintegrated.com/en/products/sensors/MAX30100.html) for further information.
 
 ### Pausing, resuming and stopping measurements
-```ruby
+```c
 void MAX30100_Pause(void);
 void MAX30100_Resume(void);
 void MAX30100_Stop(void);
