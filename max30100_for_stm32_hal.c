@@ -1,6 +1,7 @@
 /* An STM32 HAL library written for the the MAX30100 pulse oximeter and heart rate sensor. */
 /* Libraries by @eepj www.github.com/eepj */
 #include "max30100_for_stm32_hal.h"
+#include "pulse_detector.h"
 #include "main.h"
 #ifdef __cplusplus
 extern "C"{
@@ -18,6 +19,7 @@ uint8_t _max30100_red_current;
 uint8_t _max30100_ir_current_prev;
 uint8_t _max30100_red_current_prev;
 float _max30100_temp;
+PULSE_DETECTOR pd = {0};
 
 void MAX30100_Init(I2C_HandleTypeDef *ui2c, UART_HandleTypeDef *uuart){
 	_max30100_ui2c = ui2c;
@@ -126,22 +128,30 @@ void MAX30100_PlotTemperatureToUART(UART_HandleTypeDef *uuart){
 	uint8_t tempInt = _max30100_temp / 1;
 	uint8_t tempFrac = (_max30100_temp - tempInt) * 10;
 	char data[15];
-	sprintf(data, "temp:%d.%d\n", tempInt, tempFrac);
+	sprintf(data, "temp:%d.%d\r\n", tempInt, tempFrac);
 	HAL_UART_Transmit(uuart, data, strlen(data), MAX30100_TIMEOUT);
 }
 
 void MAX30100_PlotIrToUART(UART_HandleTypeDef *uuart, uint16_t *samples, uint8_t sampleSize){
 	char data[10];
 	for(uint8_t i = 0; i< sampleSize; i++){
-		sprintf(data, "s:%d\n", samples[i]);
-		HAL_UART_Transmit(uuart, data, strlen(data), MAX30100_TIMEOUT);
+		//sprintf(data, "s: %d\r\n", samples[i]);
+		//sprintf(data, "%d\r\n", samples[i]);
+		//HAL_UART_Transmit(uuart, data, strlen(data), MAX30100_TIMEOUT);
+		measure_heart_rate(&pd, samples[i]);
+		if(pd.is_data_ready)
+		{
+			pd.is_data_ready = 0;
+			sprintf(data, "HR: %d\r\n", pd.bpm);
+			HAL_UART_Transmit(uuart, data, strlen(data), MAX30100_TIMEOUT);
+		}
 	}
 }
 
 void MAX30100_PlotBothToUART(UART_HandleTypeDef *uuart, uint16_t *samplesRed, uint16_t *samplesIr, uint8_t sampleSize){
 	char data[20];
 	for(uint8_t i = 0; i< sampleSize; i++){
-		sprintf(data, "red:%d\tir:%d\n", samplesRed[i], samplesIr[i]);
+		sprintf(data, "red:%d\tir:%d\r\n", samplesRed[i], samplesIr[i]);
 		HAL_UART_Transmit(uuart, data, strlen(data), MAX30100_TIMEOUT);
 	}
 }
