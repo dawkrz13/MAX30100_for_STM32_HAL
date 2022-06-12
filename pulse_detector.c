@@ -5,32 +5,53 @@
 extern "C"{
 #endif
 
+static inline void reset_detector(PULSE_DETECTOR* pd)
+{
+    pd->bpm = 0;
+    pd->previous_sample = 0;
+    pd->sample_counter = 0;
+    pd->state = STATE_IDLE;
+}
+
+static inline uint8_t pulse_sanity_check(uint32_t bpm)
+{
+    return (bpm < BPM_MIN || bpm > BPM_MAX) ? 1 : 0;
+}
+
 void measure_heart_rate(PULSE_DETECTOR* pd, uint16_t current_sample)
 {
-    uint8_t cond = (current_sample - pd->previous_sample > HR_PEAK_THRESHOLD) ? 1 : 0;
-    if(cond && !pd->is_peak_detected)
-    {
-        pd->is_peak_detected = 1;
-    }
-    else if(cond && pd->is_peak_detected)
-    {
-        float num_seconds_between_peaks = pd->sample_counter / 100.0; // TODO: replace 100
-        float bpm_f = (SECONDS_PER_MINUTE / num_seconds_between_peaks);
-        if(bpm_f < BPM_MIN || bpm_f > BPM_MAX)
-        {
-            pd->sample_counter = 0;
-            pd->is_data_ready = 0;
-            pd->is_peak_detected = 0;
-            return;
-        }
-        pd->bpm = (uint16_t)bpm_f;
-        pd->sample_counter = 0;
-        pd->is_data_ready = 1;
-    }
+    uint8_t is_beat = (current_sample - pd->previous_sample > HR_BEAT_THRESHOLD) ? 1 : 0;
 
-    if(pd->is_peak_detected)
+    switch(pd->state)
     {
-        pd->sample_counter++;
+        case STATE_IDLE:
+            if(is_beat)
+            {
+                pd->sample_counter++;
+                pd->state = STATE_IN_PROGRESS;
+            }
+            break;
+
+        case STATE_IN_PROGRESS:
+            pd->sample_counter++;
+            if(is_beat)
+            {
+                float num_seconds_between_peaks = pd->sample_counter / 100.0; // TODO: replace 100
+                float bpm_f = (SECONDS_PER_MINUTE / num_seconds_between_peaks);
+                if(pulse_sanity_check((uint16_t)bpm_f))
+                {
+                    reset_detector(pd);
+                    break;
+                }
+                pd->bpm = (uint16_t)bpm_f;
+                pd->state = STATE_READY;
+            }
+            break;
+
+        case STATE_READY:
+            pd->sample_counter = 0;
+            pd->state = STATE_IN_PROGRESS;
+            break;
     }
 
     pd->previous_sample = current_sample;

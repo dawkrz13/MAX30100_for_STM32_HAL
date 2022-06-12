@@ -139,9 +139,8 @@ void MAX30100_PlotIrToUART(UART_HandleTypeDef *uuart, uint16_t *samples, uint8_t
 		//sprintf(data, "%d\r\n", samples[i]);
 		//HAL_UART_Transmit(uuart, data, strlen(data), MAX30100_TIMEOUT);
 		measure_heart_rate(&pd, samples[i]);
-		if(pd.is_data_ready)
+		if(pd.state == STATE_READY)
 		{
-			pd.is_data_ready = 0;
 			sprintf(data, "HR: %d\r\n", pd.bpm);
 			HAL_UART_Transmit(uuart, data, strlen(data), MAX30100_TIMEOUT);
 		}
