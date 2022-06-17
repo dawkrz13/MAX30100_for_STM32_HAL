@@ -1,4 +1,3 @@
-#include "max30100_for_stm32_hal.h"
 #include "pulse_detector.h"
 
 #ifdef __cplusplus

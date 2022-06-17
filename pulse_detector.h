@@ -1,3 +1,5 @@
+#include <stdint.h>
+
 #ifndef PULSE_DETECTOR_H
 #define PULSE_DETECTOR_H
 
