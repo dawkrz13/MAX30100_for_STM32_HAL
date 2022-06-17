@@ -1,7 +1,7 @@
 #ifndef PULSE_DETECTOR_H
 #define PULSE_DETECTOR_H
 
-#define HR_BEAT_THRESHOLD  700
+#define HR_BEAT_THRESHOLD  100
 #define BPM_MIN            40
 #define BPM_MAX            160
 #define SECONDS_PER_MINUTE 60.0
