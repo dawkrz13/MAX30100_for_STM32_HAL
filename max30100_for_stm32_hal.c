@@ -133,16 +133,17 @@ void MAX30100_PlotTemperatureToUART(UART_HandleTypeDef *uuart){
 }
 
 void MAX30100_PlotIrToUART(UART_HandleTypeDef *uuart, uint16_t *samples, uint8_t sampleSize){
-	char data[10];
-	for(uint8_t i = 0; i< sampleSize; i++){
+	uint8_t data;
+	for(uint8_t i = 0; i < sampleSize; i++){
 		//sprintf(data, "s: %d\r\n", samples[i]);
 		//sprintf(data, "%d\r\n", samples[i]);
 		//HAL_UART_Transmit(uuart, data, strlen(data), MAX30100_TIMEOUT);
 		measure_heart_rate(&pd, samples[i]);
 		if(pd.state == STATE_READY)
 		{
-			sprintf(data, "HR: %d\r\n", pd.bpm);
-			HAL_UART_Transmit(uuart, data, strlen(data), MAX30100_TIMEOUT);
+			// sprintf(data, "HR: %d\r\n", pd.bpm);
+			data = (uint8_t)pd.bpm;
+			HAL_UART_Transmit(uuart, &data, sizeof(data) , MAX30100_TIMEOUT);
 		}
 	}
 }
