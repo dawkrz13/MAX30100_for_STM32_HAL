@@ -3,6 +3,7 @@
 #ifndef MAX30100_FOR_STM32_HAL_H
 #define MAX30100_FOR_STM32_HAL_H
 #include "main.h"
+#include "pulse_detector.h"
 #include <string.h>
 /*----------------------------------------------------------------------------*/
 #define MAX30100_DEBUG						1
@@ -102,6 +103,7 @@ extern uint8_t _max30100_red_current;
 extern uint8_t _max30100_ir_current_prev;
 extern uint8_t _max30100_red_current_prev;
 extern float _max30100_temp;
+extern PULSE_DETECTOR pd;
 
 void MAX30100_Init(I2C_HandleTypeDef *ui2c, UART_HandleTypeDef *uuart);
 
@@ -123,6 +125,8 @@ float MAX30100_ReadTemperature();
 void MAX30100_PlotTemperatureToUART(UART_HandleTypeDef *uuart);
 void MAX30100_PlotIrToUART(UART_HandleTypeDef *uuart, uint16_t *samples, uint8_t sampleSize);
 void MAX30100_PlotBothToUART(UART_HandleTypeDef *uuart, uint16_t *samplesRed, uint16_t *samplesIr, uint8_t sampleSize);
+
+void run_pulse_detector(UART_HandleTypeDef *uuart);
 
 void MAX30100_Stop(void);
 void MAX30100_Pause(void);

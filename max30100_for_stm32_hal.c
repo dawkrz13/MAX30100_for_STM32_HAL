@@ -1,7 +1,6 @@
 /* An STM32 HAL library written for the the MAX30100 pulse oximeter and heart rate sensor. */
 /* Libraries by @eepj www.github.com/eepj */
 #include "max30100_for_stm32_hal.h"
-#include "pulse_detector.h"
 #include "main.h"
 #ifdef __cplusplus
 extern "C"{
@@ -50,7 +49,8 @@ void MAX30100_InterruptHandler(void){
 	if((itReg >> MAX30100_A_FULL) & 0x01){
 		MAX30100_ReadFIFO();
 		if(_max30100_mode == MAX30100_HRONLY_MODE)
-			MAX30100_PlotIrToUART(_max30100_uuart, _max30100_ir_sample, 16);
+			//MAX30100_PlotIrToUART(_max30100_uuart, _max30100_ir_sample, 16);
+			capture_ir(_max30100_ir_sample, 16);
 		else if(_max30100_mode == MAX30100_SPO2_MODE)
 			MAX30100_PlotBothToUART(_max30100_uuart, _max30100_red_sample, _max30100_ir_sample, 16);
 		MAX30100_SetMode(_max30100_mode);
@@ -133,17 +133,44 @@ void MAX30100_PlotTemperatureToUART(UART_HandleTypeDef *uuart){
 }
 
 void MAX30100_PlotIrToUART(UART_HandleTypeDef *uuart, uint16_t *samples, uint8_t sampleSize){
-	uint8_t data;
+	char data[10];
+	//uint8_t data;
 	for(uint8_t i = 0; i < sampleSize; i++){
-		//sprintf(data, "s: %d\r\n", samples[i]);
-		//sprintf(data, "%d\r\n", samples[i]);
-		//HAL_UART_Transmit(uuart, data, strlen(data), MAX30100_TIMEOUT);
 		measure_heart_rate(&pd, samples[i]);
 		if(pd.state == STATE_READY)
 		{
-			// sprintf(data, "HR: %d\r\n", pd.bpm);
+			sprintf(data, "HR: %d\r\n", pd.bpm);
+			//data = (uint8_t)pd.bpm;
+			HAL_UART_Transmit(uuart, &data, sizeof(data) , MAX30100_TIMEOUT);
+		}
+	}
+}
+
+/* Detects pulse based on IR data stored in the buffer and sends result via UART */
+void run_pulse_detector(UART_HandleTypeDef *uuart){
+	pd.is_algo_running = 1;
+	//char data[10];
+	uint8_t data;
+	for(size_t i = 0; i <= pd.idx; i++){
+		measure_heart_rate(&pd, pd.ir_buffer[i]);
+		if(pd.state == STATE_READY)
+		{
+			//sprintf(data, "HR: %d\r\n", pd.bpm);
 			data = (uint8_t)pd.bpm;
 			HAL_UART_Transmit(uuart, &data, sizeof(data) , MAX30100_TIMEOUT);
+		}
+	}
+	reset_detector(&pd);
+	pd.is_algo_running = 0;
+}
+
+/* Saves IR data to the buffer */
+void capture_ir(uint16_t *samples, uint8_t sampleSize){
+	if(!pd.is_algo_running)
+	{
+		for(size_t i = 0; i < sampleSize; i++){
+			pd.ir_buffer[pd.idx] = samples[i];
+			pd.idx++;
 		}
 	}
 }
