@@ -5,14 +5,6 @@
 extern "C"{
 #endif
 
-static inline void reset_detector(PULSE_DETECTOR* pd)
-{
-    pd->bpm = 0;
-    pd->previous_sample = 0;
-    pd->sample_counter = 0;
-    pd->state = STATE_IDLE;
-}
-
 static inline uint8_t pulse_sanity_check(uint32_t bpm)
 {
     return (bpm < BPM_MIN || bpm > BPM_MAX) ? 1 : 0;
